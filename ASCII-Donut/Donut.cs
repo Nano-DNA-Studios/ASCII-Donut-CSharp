@@ -1,15 +1,44 @@
 ﻿
 namespace ASCII_Donut
 {
+    /// <summary>
+    /// Represents a Donut that can be rendered to the console
+    /// </summary>
     internal class Donut
     {
         /// <summary>
+        /// X Position of the Donut
+        /// </summary>
+        public float XPos { get; set; }
+
+        /// <summary>
+        /// Y Position of the Donut
+        /// </summary>
+        public float YPos { get; set; }
+
+        /// <summary>
+        /// Z Position of the Donut
+        /// </summary>
+        public float ZPos { get; set; }
+
+        /// <summary>
+        /// Light Source in the Scene
+        /// </summary>
+        public Light LightSource = new Light(0, 1, -1, 20);
+
+        /// <summary>
         /// Luminence Values
         /// </summary>
-        string luminenceValues = ".,-~:;=!*#$@";
+        private string _luminenceValues = ".,-~:;=!*#$@";
 
+        /// <summary>
+        /// Step Size of the Theta Angle (The circle making the donut ring)
+        /// </summary>
         public float thetaStep = 0.02f;
 
+        /// <summary>
+        /// Step Size of the Phi Angle (the donut spin)
+        /// </summary>
         public float phiStep = 0.03f;
 
         /// <summary>
@@ -33,29 +62,24 @@ namespace ASCII_Donut
         public float K1;
 
         /// <summary>
-        /// Light Position X
-        /// </summary>
-        public float LightX = 0;
-
-        /// <summary>
-        /// Light Position Y
-        /// </summary>
-        public float LightY = 1;
-
-        /// <summary>
-        /// Light Position Z
-        /// </summary>
-        public float LightZ = -1;
-
-        /// <summary>
         /// Height of the Screen
-        /// </summary>
-        int height = Console.WindowHeight;
+        /// </summary>  
+        private int _height { get; set; }
 
         /// <summary>
         /// Width of the Screen
         /// </summary>
-        int width = Console.WindowWidth;
+        private int _width { get; set; }
+
+        /// <summary>
+        /// Previous Height of the Screen
+        /// </summary>
+        private int _lastHeight;
+
+        /// <summary>
+        /// Previous Width of the Screen
+        /// </summary>
+        private int _lastWidth;
 
         /// <summary>
         /// Angle Around the X Axis
@@ -67,21 +91,34 @@ namespace ASCII_Donut
         /// </summary>
         public float B;
 
+        /// <summary>
+        /// Screen Buffer, the text that will represent the displayed donut
+        /// </summary>
+        private char[] _buf;
+
+        /// <summary>
+        /// Default Constructor
+        /// </summary>
+        public Donut(Light lightSource)
+        {
+            LightSource = lightSource;
+            _height = Console.WindowHeight;
+            _width = Console.WindowWidth;
+            K1 = _width * K2 * 3 / (24 * (R1 + R2));
+        }
+
+        /// <summary>
+        /// Renders the Donut to the Console
+        /// </summary>
         public void Render()
         {
-            height = Console.WindowHeight;
-            width = Console.WindowWidth;
+            int length = _width * _height;
 
-            K1 = width * K2 * 3 / (24 * (R1 + R2));
-
-            int length = width * height;
-
-            char[] buf = new char[length];
+            _buf = new char[length];
             float[] zBuffer = new float[length];
-            Array.Fill(buf, ' ');
+            Array.Fill(_buf, ' ');
             Array.Fill(zBuffer, float.MinValue);
 
-            //float cosY = MathF.Cos(Y), sinY = MathF.Sin(Y);
             float cosB = MathF.Cos(B), sinB = MathF.Sin(B);
             float cosA = MathF.Cos(A), sinA = MathF.Sin(A);
 
@@ -107,19 +144,19 @@ namespace ASCII_Donut
                     float z1 = cosA * sinPhi;
                     float z2 = sinA;
 
-                    float x = circleX * x1 - circleY * x2;
-                    float y = circleX * y1 + circleY * y2;
+                    float x = XPos + circleX * x1 - circleY * x2;
+                    float y = YPos + circleX * y1 + circleY * y2;
                     float z = K2 + circleX * z1 + circleY * z2;
 
                     float ooz = 1 / z;
 
-                    int xp = (int)(width / 2 + K1 * ooz * x);
-                    int yp = (int)(height / 2 - K1 * ooz * y);
+                    int xp = (int)(_width / 2 + K1 * ooz * x);
+                    int yp = (int)(_height / 2 - K1 * ooz * y);
 
-                    xp = Math.Clamp(xp, 0, width - 1);
-                    yp = Math.Clamp(yp, 0, height - 1);
+                    xp = Math.Clamp(xp, 0, _width - 1);
+                    yp = Math.Clamp(yp, 0, _height - 1);
 
-                    int idx = xp + yp * width;
+                    int idx = xp + yp * _width;
 
                     float nx = cosTheta;
                     float ny = sinTheta;
@@ -128,49 +165,56 @@ namespace ASCII_Donut
                     float Ny = nx * y1 + ny * y2;
                     float Nz = nx * z1 + ny * z2;
 
-                    float Luminence = Nx * LightX + Ny * LightY + Nz * LightZ;
+                    float mag = MathF.Sqrt(Nx * Nx + Ny * Ny + Nz * Nz);
+
+                    Nx = Nx / mag;
+                    Ny = Ny / mag;
+                    Nz = Nz / mag;
+
+                    float Luminence = Nx * LightSource.NormalizedX + Ny * LightSource.NormalizedY + Nz * LightSource.NormalizedZ;
 
                     if (idx > length || idx < 0)
                         continue;
 
-                    // test against the z-buffer.  larger 1/z means the pixel is
-                    // closer to the viewer than what's already plotted.
                     if (ooz > zBuffer[idx])
                     {
-                        int luminance_index = (int)(((Luminence + MathF.Sqrt(2)) * (11)) / (2 * MathF.Sqrt(2)));
-
+                        int luminance_index = (int)((Luminence + 1) * (_luminenceValues.Length) / (2) * LightSource.GetIntensity(x, y, z));
+                        luminance_index = Math.Clamp(luminance_index, 0, _luminenceValues.Length - 1);
                         zBuffer[idx] = ooz;
-                        //int luminance_index = (int)(((Luminence + MathF.Sqrt(2))) * 8) / 2;
-                        // luminance_index is now in the range 0..11 (8*sqrt(2) = 11.3)
-                        buf[idx] = luminenceValues[luminance_index];
+                        _buf[idx] = _luminenceValues[luminance_index];
                     }
-
                 }
             }
 
-            string display = "";
-            for (int i = 0; i < buf.Length; i++)
+            Display();
+        }
+
+        /// <summary>
+        /// Displays the Donut to the Console, centers it on the console.
+        /// </summary>
+        private void Display()
+        {
+            int height = Console.WindowHeight;
+            int width = Console.WindowWidth;
+
+            if (height != _lastHeight && width != _lastWidth)
+                Console.Clear();
+
+            int startX = (width - _width) / 2;
+            int startY = (height - _height) / 2;
+
+            for (int y = 0; y < _height; y++)
             {
-                display += buf[i];
-                if (i % width == width - 1)
-                    display += "\n";
+                Console.SetCursorPosition(startX, startY + y);
+                for (int x = 0; x < _width; x++)
+                {
+                    int index = y * _width + x;
+                    Console.Write(_buf[index]);
+                }
             }
 
-            Console.Clear();
-            Console.Write(display);
-
-           // Thread.Sleep(10);
-
-
-            /* Console.Clear();
-             for (int k = 0; k < buf.Length; k++)
-             {
-                 Console.Write(buf[k]);
-                 if (k % width == width - 1)
-                     Console.WriteLine();
-             }*/
-
-            Thread.Sleep(50);
+            _lastHeight = _height;
+            _lastWidth = _width;
         }
     }
 }

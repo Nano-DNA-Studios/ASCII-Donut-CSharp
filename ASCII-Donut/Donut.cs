@@ -3,120 +3,174 @@ namespace ASCII_Donut
 {
     internal class Donut
     {
-        public float positionX = 0;
-        public float positionY = 0;
-        public float positionZ = -10;
-
-        public float lightX = 10;
-        public float lightY = 0;
-        public float lightZ = 0;
-
-        float circleRadius = 0.5f;
-        float torusRadius = 5f;
-
-        int height = 20;
-        int width = 80;
-
-        public float Y = 0, B = 0, A = 0;
-
+        /// <summary>
+        /// Luminence Values
+        /// </summary>
         string luminenceValues = ".,-~:;=!*#$@";
+
+        public float thetaStep = 0.02f;
+
+        public float phiStep = 0.03f;
+
+        /// <summary>
+        /// Radius of the Circle part of the torus
+        /// </summary>
+        public float R1 = 0.3f;
+
+        /// <summary>
+        /// Radius of the torus, distance from the center of the torus to the center of the circle
+        /// </summary>
+        public float R2 = 1;
+
+        /// <summary>
+        /// Distance from the screen
+        /// </summary>
+        public float K2 = 2;
+
+        /// <summary>
+        /// Scaling Factor
+        /// </summary>
+        public float K1;
+
+        /// <summary>
+        /// Light Position X
+        /// </summary>
+        public float LightX = 0;
+
+        /// <summary>
+        /// Light Position Y
+        /// </summary>
+        public float LightY = 1;
+
+        /// <summary>
+        /// Light Position Z
+        /// </summary>
+        public float LightZ = -1;
+
+        /// <summary>
+        /// Height of the Screen
+        /// </summary>
+        int height = Console.WindowHeight;
+
+        /// <summary>
+        /// Width of the Screen
+        /// </summary>
+        int width = Console.WindowWidth;
+
+        /// <summary>
+        /// Angle Around the X Axis
+        /// </summary>
+        public float A;
+
+        /// <summary>
+        /// Angle Around the Z Axis
+        /// </summary>
+        public float B;
 
         public void Render()
         {
+            height = Console.WindowHeight;
+            width = Console.WindowWidth;
+
+            K1 = width * K2 * 3 / (24 * (R1 + R2));
+
             int length = width * height;
-           
+
             char[] buf = new char[length];
             float[] zBuffer = new float[length];
             Array.Fill(buf, ' ');
             Array.Fill(zBuffer, float.MinValue);
 
-            float cosY = MathF.Cos(Y), sinY = MathF.Sin(Y);
+            //float cosY = MathF.Cos(Y), sinY = MathF.Sin(Y);
             float cosB = MathF.Cos(B), sinB = MathF.Sin(B);
             float cosA = MathF.Cos(A), sinA = MathF.Sin(A);
 
-            //Rotation Matrix
-            float R1 = cosA * cosB;
-            float R2 = cosA * sinB * sinY - sinA * cosY;
-            float R3 = cosA * sinB * cosY + sinA * sinY;
-            float R4 = sinA * cosB;
-            float R5 = sinA * sinB * sinY + cosA * cosY;
-            float R6 = sinA * sinB * cosY - cosA * sinY;
-            float R7 = -sinB;
-            float R8 = cosB * sinY;
-            float R9 = cosB * cosY;
-
-            /* float R1 = cosA * cosB;
-             float R2 = -sinA;
-             float R3 = cosA * sinB;
-             float R4 = sinA * cosB;
-             float R5 = cosA;
-             float R6 = sinA * sinB;
-             float R7 = -sinB;
-             float R8 = 0;
-             float R9 = cosB;*/
-
-            for (float theta = 0; theta < 2 * Math.PI; theta += 0.01f)
+            for (float theta = 0; theta < 2 * Math.PI; theta += thetaStep)
             {
-                for (float phi = 0; phi < 2 * Math.PI; phi += 0.01f)
+                float cosTheta = MathF.Cos(theta);
+                float sinTheta = MathF.Sin(theta);
+
+                float circleX = R2 + R1 * cosTheta;
+                float circleY = R1 * sinTheta;
+
+                for (float phi = 0; phi < 2 * Math.PI; phi += phiStep)
                 {
-                    //Calculate Sins and Cosines
-                    float sinPhi = (float)Math.Sin(phi);
-                    float cosPhi = (float)Math.Cos(phi);
-                    float sinTheta = (float)Math.Sin(theta);
-                    float cosTheta = (float)Math.Cos(theta);
+                    float cosPhi = MathF.Cos(phi);
+                    float sinPhi = MathF.Sin(phi);
 
-                    //Calculate the 3D coordinates without world rotation
-                    float circleX = cosPhi * (cosTheta * circleRadius + torusRadius);
-                    float circleY = sinTheta * circleRadius;
-                    float circleZ = sinPhi * torusRadius;
+                    float x1 = cosB * cosPhi + sinB * sinA * sinPhi;
+                    float x2 = cosA * sinB;
 
-                    //Calculate the 3D coordinates with world rotation
-                    float finalX = R1 * circleX + R2 * circleY + R3 * circleZ + positionX;
-                    float finalY = R4 * circleX + R5 * circleY + R6 * circleZ + positionY;
-                    float finalZ = R7 * circleX + R8 * circleY + R9 * circleZ + positionZ;
+                    float y1 = sinB * cosPhi - cosB * sinA * sinPhi;
+                    float y2 = cosA * cosB;
 
-                    float nx = cosPhi * cosTheta;
-                    float ny = sinTheta;
-                    float nz = sinPhi;
+                    float z1 = cosA * sinPhi;
+                    float z2 = sinA;
 
-                    nx = R1 * nx + R2 * ny + R3 * nz;
-                    ny = R4 * nx + R5 * ny + R6 * nz;
-                    nz = R7 * nx + R8 * ny + R9 * nz;
+                    float x = circleX * x1 - circleY * x2;
+                    float y = circleX * y1 + circleY * y2;
+                    float z = K2 + circleX * z1 + circleY * z2;
 
-                    if (finalZ == 0) continue;
-                    float invZ = 1/ finalZ;
+                    float ooz = 1 / z;
 
-                    int xp = (int)(width / 2 + 10 * invZ * finalX * width);
-                    int yp = (int)(height / 2 - invZ * finalY * height);
+                    int xp = (int)(width / 2 + K1 * ooz * x);
+                    int yp = (int)(height / 2 - K1 * ooz * y);
 
-                    if (xp < 0 || xp >= width || yp < 0 || yp >= height) continue; // Ensure the indices are within the screen bounds
+                    xp = Math.Clamp(xp, 0, width - 1);
+                    yp = Math.Clamp(yp, 0, height - 1);
+
                     int idx = xp + yp * width;
 
-                    if (idx > 0 && idx < width * height)
+                    float nx = cosTheta;
+                    float ny = sinTheta;
+
+                    float Nx = nx * x1 - ny * x2;
+                    float Ny = nx * y1 + ny * y2;
+                    float Nz = nx * z1 + ny * z2;
+
+                    float Luminence = Nx * LightX + Ny * LightY + Nz * LightZ;
+
+                    if (idx > length || idx < 0)
+                        continue;
+
+                    // test against the z-buffer.  larger 1/z means the pixel is
+                    // closer to the viewer than what's already plotted.
+                    if (ooz > zBuffer[idx])
                     {
-                        if (invZ > zBuffer[idx])
-                        {
-                            
+                        int luminance_index = (int)(((Luminence + MathF.Sqrt(2)) * (11)) / (2 * MathF.Sqrt(2)));
 
-                            // Dot product with light direction, assume light direction as normalized
-                            float dotProduct = nx * lightX + ny * lightY + nz * lightZ;
-                            int luminance = (int)(luminenceValues.Length * (dotProduct + 1) / 2.0); // Normalize and scale to character index
-
-                            luminance = Math.Clamp(luminance, 0, luminenceValues.Length - 1);
-                            buf[idx] = luminenceValues[luminance];
-                        }
+                        zBuffer[idx] = ooz;
+                        //int luminance_index = (int)(((Luminence + MathF.Sqrt(2))) * 8) / 2;
+                        // luminance_index is now in the range 0..11 (8*sqrt(2) = 11.3)
+                        buf[idx] = luminenceValues[luminance_index];
                     }
+
                 }
             }
 
-            Console.Clear();
-            for (int k = 0; k < buf.Length; k++)
+            string display = "";
+            for (int i = 0; i < buf.Length; i++)
             {
-                Console.Write(buf[k]);
-                if (k % width == width - 1)
-                    Console.WriteLine();
+                display += buf[i];
+                if (i % width == width - 1)
+                    display += "\n";
             }
 
+            Console.Clear();
+            Console.Write(display);
+
+           // Thread.Sleep(10);
+
+
+            /* Console.Clear();
+             for (int k = 0; k < buf.Length; k++)
+             {
+                 Console.Write(buf[k]);
+                 if (k % width == width - 1)
+                     Console.WriteLine();
+             }*/
+
+            Thread.Sleep(50);
         }
     }
 }

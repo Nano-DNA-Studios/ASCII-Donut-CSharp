@@ -4,18 +4,18 @@
     {
         static void Main(string[] args)
         {
-            Donut donut = new Donut();
+            DonutReal donut = new DonutReal();
 
             //donut.positionZ = -4;
            // donut.A = (float)Math.PI /2;
-            donut.B = (float)Math.PI ;
+           // donut.B = (float)Math.PI ;
 
             while (true)
             {
                 donut.Render();
                 //donut.positionZ -= 0.1f;
                 donut.A += 0.04f;
-                 donut.B += 0.08f;
+                 donut.B += 0.04f;
                 //donut.lightX -= 0.1f;
             }
         }

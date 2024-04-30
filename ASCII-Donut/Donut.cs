@@ -5,7 +5,7 @@ namespace ASCII_Donut
     {
         public float positionX = 0;
         public float positionY = 0;
-        public float positionZ = -20;
+        public float positionZ = -10;
 
         public float lightX = 10;
         public float lightY = 0;
@@ -84,7 +84,7 @@ namespace ASCII_Donut
                     nz = R7 * nx + R8 * ny + R9 * nz;
 
                     if (finalZ == 0) continue;
-                    float invZ = 1 / finalZ;
+                    float invZ = 1/ finalZ;
 
                     int xp = (int)(width / 2 + 10 * invZ * finalX * width);
                     int yp = (int)(height / 2 - invZ * finalY * height);

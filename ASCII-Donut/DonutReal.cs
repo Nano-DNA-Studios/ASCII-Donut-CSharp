@@ -10,17 +10,17 @@ namespace ASCII_Donut
         /// <summary>
         /// Radius of the Circle part of the torus
         /// </summary>
-        public float R1 = 1f;
+        public float R1 = 0.3f;
 
         /// <summary>
         /// Radius of the torus, distance from the center of the torus to the center of the circle
         /// </summary>
-        public float R2 = 2;
+        public float R2 = 1;
 
         /// <summary>
         /// Distance from the screen
         /// </summary>
-        public float K2 = 5;
+        public float K2 = 10;
 
         /// <summary>
         /// Scaling Factor
@@ -145,7 +145,7 @@ namespace ASCII_Donut
         public void Render()
         {
             height = Console.WindowHeight;
-             width = Console.WindowWidth;
+            width = Console.WindowWidth;
 
             float K1 = width * K2 * 3 / (8 * (R1 + R2));
 
@@ -172,23 +172,37 @@ namespace ASCII_Donut
                     float circleX = R2 + R1 * cosTheta;
                     float circleY = R1 * sinTheta;
 
-                    float x = circleX * (cosB * cosPhi + sinB * sinA * sinPhi) - circleY * cosA * sinB;
-                    float y = circleX * (sinB * cosPhi - cosB * sinA * sinPhi) + circleY * cosA * cosB;
-                    float z = K2 + circleX * cosA * sinPhi + circleY * sinA;
+
+                    float x1 = cosB * cosPhi + sinB * sinA * sinPhi;
+                    float x2 = cosA * sinB;
+
+                    float y1 = sinB * cosPhi - cosB * sinA * sinPhi;
+                    float y2 = cosA * cosB;
+
+                    float z1 = cosA * sinPhi;
+                    float z2 = sinA;
+
+
+                    float x = circleX * x1 - circleY * x2;
+                    float y = circleX * y1 + circleY * y2;
+                    float z = K2 + circleX * z1 + circleY * z2;
 
                     float ooz = 1 / z;
 
                     int xp = (int)(width / 2 + K1 * ooz * x);
                     int yp = (int)(height / 2 - K1 * ooz * y);
 
+                    xp = Math.Clamp(xp, 0, width - 1);
+                    yp = Math.Clamp(yp, 0, height - 1);
+
                     int idx = xp + yp * width;
 
                     float nx = cosTheta;
                     float ny = sinTheta;
 
-                    float Nx = nx * (cosB * cosPhi + sinB * sinA * sinPhi) - ny * cosA * sinB;
-                    float Ny = nx * (sinB * cosPhi - cosB * sinA * sinPhi) + ny * cosA * cosB;
-                    float Nz = nx * cosA * sinPhi + ny * sinA;
+                    float Nx = nx * x1 - ny * x2;
+                    float Ny = nx * y1 + ny * y2;
+                    float Nz = nx * z1 + ny * z2;
 
 
                     float Luminence = Nx * LightX + Ny * LightY + Nz * LightZ;
@@ -196,18 +210,18 @@ namespace ASCII_Donut
                     if (idx > length || idx < 0)
                         continue;
 
-                    if (Luminence > 0)
+                    // if (Luminence > 0)
+                    // {
+                    // test against the z-buffer.  larger 1/z means the pixel is
+                    // closer to the viewer than what's already plotted.
+                    if (ooz > zBuffer[idx])
                     {
-                        // test against the z-buffer.  larger 1/z means the pixel is
-                        // closer to the viewer than what's already plotted.
-                        if (ooz > zBuffer[idx])
-                        {
-                            zBuffer[idx] = ooz;
-                            int luminance_index = (int)(((Luminence + MathF.Sqrt(2)) / 2) * 8);
-                            // luminance_index is now in the range 0..11 (8*sqrt(2) = 11.3)
-                            buf[idx] = ".,-~:;=!*#$@"[luminance_index];
-                        }
+                        zBuffer[idx] = ooz;
+                        int luminance_index = (int)(((Luminence + MathF.Sqrt(2)) / 2) * 8);
+                        // luminance_index is now in the range 0..11 (8*sqrt(2) = 11.3)
+                        buf[idx] = ".,-~:;=!*#$@"[luminance_index];
                     }
+                    // }
                 }
             }
 
@@ -219,7 +233,7 @@ namespace ASCII_Donut
                     Console.WriteLine();
             }
 
-            //Thread.Sleep(1000);
+            Thread.Sleep(1000);
         }
     }
 }

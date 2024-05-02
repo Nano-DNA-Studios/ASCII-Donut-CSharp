@@ -24,7 +24,7 @@ namespace ASCII_Donut
         /// <summary>
         /// Light Source in the Scene
         /// </summary>
-        public Light LightSource = new Light(0, 1, -1, 20);
+        public Light LightSource { get; private set; }
 
         /// <summary>
         /// Luminence Values
@@ -44,17 +44,17 @@ namespace ASCII_Donut
         /// <summary>
         /// Radius of the Circle part of the torus
         /// </summary>
-        public float R1 = 0.3f;
+        public float R1 = 1f;
 
         /// <summary>
         /// Radius of the torus, distance from the center of the torus to the center of the circle
         /// </summary>
-        public float R2 = 1;
+        public float R2 = ;
 
         /// <summary>
         /// Distance from the screen
         /// </summary>
-        public float K2 = 2;
+        public float K2 = 10;
 
         /// <summary>
         /// Scaling Factor

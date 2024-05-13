@@ -1,7 +1,14 @@
 ﻿namespace ASCII_Donut
 {
+    /// <summary>
+    /// The ASCII Donut Render Program
+    /// </summary>
     internal class Program
     {
+        /// <summary>
+        /// Main function of the CLI Program, Prompts the user to resize their terminal. Once they say yes it renders the Donut with a rotation.
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             bool start = false;

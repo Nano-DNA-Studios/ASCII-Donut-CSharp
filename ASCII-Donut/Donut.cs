@@ -49,7 +49,7 @@ namespace ASCII_Donut
         /// <summary>
         /// Radius of the torus, distance from the center of the torus to the center of the circle
         /// </summary>
-        public float R2 = ;
+        public float R2 =4f;
 
         /// <summary>
         /// Distance from the screen
